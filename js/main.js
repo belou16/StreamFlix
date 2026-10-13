@@ -37,6 +37,9 @@ const PLACEHOLDER_POSTER = 'assets/images/poster-placeholder.svg';
 const POSTER_WIDTH = 210;
 const POSTER_HEIGHT = 295;
 
+// Les premières cartes sont visibles dès l'ouverture : leurs affiches ne doivent pas attendre le chargement différé.
+const EAGER_POSTER_COUNT = 6;
+
 // Entier strictement positif, sans zéro initial.
 const SHOW_ID_PATTERN = /^[1-9]\d*$/;
 
@@ -260,7 +263,12 @@ function renderCatalog() {
   }
 
   catalogPage.status.replaceChildren();
-  catalogPage.grid.replaceChildren(...visibleShows.map(createShowCard));
+  const cards = visibleShows.map((show, index) => {
+    const posterLoading = index < EAGER_POSTER_COUNT ? 'eager' : 'lazy';
+    return createShowCard(show, posterLoading);
+  });
+
+  catalogPage.grid.replaceChildren(...cards);
 }
 
 function readFilters() {
@@ -316,14 +324,14 @@ function resetFilters() {
   catalogPage.searchInput.focus();
 }
 
-function createShowCard(show) {
+function createShowCard(show, posterLoading) {
   const card = cloneTemplate('#show-card-template');
   const link = card.querySelector('.show-card-link');
 
   link.href = getShowUrl(show.id);
   link.textContent = show.name;
 
-  card.querySelector('.show-card-media').append(createPoster(show.name, getPosterUrl(show)));
+  card.querySelector('.show-card-media').append(createPoster(show.name, getPosterUrl(show), posterLoading));
   card.querySelector('.show-card-year').textContent = formatYear(getYear(show));
   fillRating(card.querySelector('.show-card-rating'), getRating(show));
   fillGenreList(card.querySelector('.show-card-genres'), show.genres);
