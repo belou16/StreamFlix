@@ -1,7 +1,4 @@
-/*
- * Feuille de style principale, écrite mobile first : elle décrit la version étroite (moins de 768 px).
- * Les paliers tablette et desktop sont dans responsive.css.
- */
+/* Styles mobile first. Tablette et desktop : voir responsive.css. */
 
 /* Système de design */
 
@@ -140,7 +137,7 @@ select {
   color: inherit;
 }
 
-/* Les blocs affichés en grille doivent rester masqués tant qu'ils portent l'attribut hidden. */
+/* Garde ces blocs cachés tant qu'ils ont l'attribut hidden. */
 .show-detail[hidden],
 .watchlist-form[hidden] {
   display: none;
@@ -160,7 +157,7 @@ select {
   padding-inline: var(--space-md);
 }
 
-/* Masque un élément à l'écran tout en le laissant lisible par les lecteurs d'écran. */
+/* Caché à l'écran, mais lu par les lecteurs d'écran. */
 .visually-hidden {
   position: absolute;
   width: 1px;
@@ -217,7 +214,7 @@ select {
   justify-content: space-between;
 }
 
-/* Le logo fixe la hauteur de la barre, que le menu mobile soit ouvert ou non. */
+/* Le logo fixe la hauteur de la barre. */
 .logo {
   display: flex;
   align-items: center;
@@ -250,7 +247,7 @@ select {
   border-color: var(--color-text-muted);
 }
 
-/* Icône hamburger : une barre centrale et deux pseudo-éléments, qui forment une croix une fois le menu ouvert. */
+/* Hamburger : 3 barres qui forment une croix quand le menu est ouvert. */
 .menu-toggle-icon,
 .menu-toggle-icon::before,
 .menu-toggle-icon::after {
@@ -295,7 +292,7 @@ select {
   transform: translateY(calc(var(--menu-icon-gap) * -1)) rotate(-45deg);
 }
 
-/* Sous 768 px, le menu n'est visible que lorsque le bouton est déplié (aria-expanded). */
+/* Sous 768 px : menu visible seulement quand le bouton est ouvert. */
 .main-nav {
   display: none;
   flex-basis: 100%;
@@ -368,7 +365,7 @@ select {
   letter-spacing: var(--letter-spacing-tight);
 }
 
-/* Titre qui reçoit le focus par script (tabindex="-1") : il n'est pas interactif, pas de contour. */
+/* Titre qui reçoit le focus par script : pas de contour. */
 [tabindex="-1"]:focus {
   outline: none;
 }
@@ -543,7 +540,7 @@ select {
 
 /* Éléments de données */
 
-/* Format d'affiche constant : une image absente ou d'un autre ratio ne déforme pas la carte. */
+/* Affiches toujours au même format, même sans image. */
 .poster {
   width: 100%;
   height: auto;
@@ -590,7 +587,7 @@ select {
   color: var(--color-text-muted);
 }
 
-/* États de l'interface : chargement, vide, erreur, introuvable */
+/* États : chargement, vide, erreur, introuvable */
 
 .state {
   display: flex;
@@ -670,7 +667,7 @@ select {
   gap: var(--space-md);
 }
 
-/* Sur mobile, la carte est horizontale : affiche à gauche, informations à droite. */
+/* Mobile : carte horizontale. */
 .show-card {
   position: relative;
   display: grid;
@@ -691,7 +688,7 @@ select {
   transform: translateY(var(--hover-lift));
 }
 
-/* Le focus clavier est dessiné autour de la carte entière. */
+/* Focus clavier autour de toute la carte. */
 .show-card:focus-within {
   outline: var(--focus-ring-width) solid var(--color-focus);
   outline-offset: var(--focus-ring-offset);
@@ -714,7 +711,7 @@ select {
   text-decoration: none;
 }
 
-/* Le lien du titre s'étend sur toute la carte pour la rendre cliquable. */
+/* Le lien du titre couvre toute la carte. */
 .show-card-link::after {
   content: "";
   position: absolute;

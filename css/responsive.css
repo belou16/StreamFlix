@@ -1,8 +1,4 @@
-/*
- * Paliers responsive et préférences utilisateur.
- * Mobile : moins de 768 px (style.css) · Tablette : 768 à 1024 px · Desktop : plus de 1024 px.
- * Les media queries ne peuvent pas lire de variables CSS : les largeurs y sont donc écrites en dur.
- */
+/* Tablette : 768 à 1024 px. Desktop : plus de 1024 px. Les media queries n'acceptent pas les variables. */
 
 /* Tablette : 768 px et plus */
 
@@ -11,7 +7,7 @@
     padding-inline: var(--space-xl);
   }
 
-  /* Le menu est déplié dans l'en-tête : le bouton hamburger n'a plus lieu d'être. */
+  /* Menu toujours visible : plus besoin du bouton. */
   .menu-toggle {
     display: none;
   }
@@ -78,7 +74,7 @@
     font-size: var(--font-size-2xl);
   }
 
-  /* Les boutons pleine largeur et les messages qui les suivent reprennent leur largeur naturelle. */
+  /* Boutons et messages : largeur normale. */
   .button-block,
   .feedback {
     justify-self: start;
@@ -98,13 +94,13 @@
 /* Desktop : plus de 1024 px */
 
 @media (min-width: 1025px) {
-  /* Autant de colonnes que la largeur le permet (3 ou plus), sans casse quel que soit le nombre de séries. */
+  /* Autant de colonnes que possible (3 ou plus). */
   .catalog-grid {
     grid-template-columns: repeat(auto-fill, minmax(var(--card-min-width), 1fr));
     gap: var(--space-lg);
   }
 
-  /* La carte devient verticale : affiche en haut, informations en dessous. */
+  /* Carte verticale : affiche au-dessus du texte. */
   .show-card {
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: auto 1fr;
