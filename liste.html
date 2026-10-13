@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ma liste · StreamFlix</title>
+  <meta name="description" content="Votre liste StreamFlix : classez les séries à voir par priorité puis envoyez votre sélection.">
+
+  <link rel="icon" href="assets/images/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/responsive.css">
+  <script type="module" src="js/main.js"></script>
+</head>
+<body data-page="watchlist">
+  <a class="skip-link" href="#main">Aller au contenu principal</a>
+
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="logo" href="index.html">Stream<span class="logo-accent">Flix</span></a>
+
+      <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="main-nav">
+        <span class="visually-hidden">Menu</span>
+        <span class="menu-toggle-icon" aria-hidden="true"></span>
+      </button>
+
+      <nav id="main-nav" class="main-nav" aria-label="Navigation principale">
+        <ul class="nav-list">
+          <li><a class="nav-link" href="index.html">Catalogue</a></li>
+          <li>
+            <a class="nav-link" href="liste.html" aria-current="page">
+              Ma liste
+              <span class="nav-count"><span class="visually-hidden">séries retenues :</span> <span data-watchlist-count>0</span></span>
+            </a>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main" class="container page">
+    <section class="watchlist" aria-labelledby="watchlist-title">
+      <h1 id="watchlist-title" class="page-title" tabindex="-1">Ma liste</h1>
+      <p id="watchlist-count" class="results-count" aria-live="polite"></p>
+
+      <div id="watchlist-status" aria-live="polite"></div>
+
+      <form id="watchlist-form" class="watchlist-form" novalidate hidden>
+        <p class="watchlist-hint">Attribuez à chaque série une priorité de 1 (à voir en premier) à 10.</p>
+        <ul id="watchlist-items" class="watchlist-items"></ul>
+
+        <button id="submit-button" class="button button-primary button-block" type="submit">Envoyer ma sélection</button>
+        <p id="submit-feedback" class="feedback" aria-live="polite"></p>
+      </form>
+    </section>
+
+    <noscript>
+      <p class="noscript">Activez JavaScript pour afficher votre liste.</p>
+    </noscript>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <p>© 2026 StreamFlix · Données fournies par <a href="https://www.tvmaze.com">TVMaze</a></p>
+    </div>
+  </footer>
+
+  <!-- Gabarit d'une ligne de Ma liste, cloné par main.js pour chaque série retenue -->
+  <template id="watchlist-item-template">
+    <li class="watchlist-item">
+      <div class="watchlist-media"></div>
+
+      <div class="watchlist-info">
+        <h2 class="watchlist-title"><a class="watchlist-link"></a></h2>
+        <p class="watchlist-year"></p>
+      </div>
+
+      <div class="watchlist-controls">
+        <div class="priority-field">
+          <label class="label priority-label">Priorité</label>
+          <input class="input priority-input" type="number" min="1" max="10" step="1" inputmode="numeric" required>
+        </div>
+        <button class="button button-secondary remove-button" type="button">
+          Supprimer<span class="visually-hidden remove-button-context"></span>
+        </button>
+      </div>
+
+      <p class="field-error" aria-live="polite"></p>
+    </li>
+  </template>
+</body>
+</html>

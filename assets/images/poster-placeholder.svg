@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 210 295" width="210" height="295">
+  <rect width="210" height="295" fill="#20232c"/>
+  <g fill="none" stroke="#454b5a" stroke-width="3" stroke-linejoin="round">
+    <rect x="75" y="108" width="60" height="44" rx="4"/>
+    <path d="M75 120h60M75 140h60M90 108v44M120 108v44"/>
+  </g>
+  <text x="105" y="182" fill="#a3a8b5" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" font-size="14" text-anchor="middle">Affiche</text>
+  <text x="105" y="200" fill="#a3a8b5" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" font-size="14" text-anchor="middle">indisponible</text>
+</svg>

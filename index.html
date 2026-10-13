@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Catalogue des séries · StreamFlix</title>
+  <meta name="description" content="Parcourez le catalogue StreamFlix : recherchez une série, filtrez par genre et triez par note ou par année pour trouver quoi regarder.">
+
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="StreamFlix">
+  <meta property="og:locale" content="fr_FR">
+  <meta property="og:title" content="StreamFlix · Trouvez votre prochaine série">
+  <meta property="og:description" content="Recherchez, filtrez et comparez des centaines de séries, puis constituez votre liste de programmes à voir.">
+  <meta property="og:image" content="assets/images/og-image.png">
+  <meta property="og:image:alt" content="Logo StreamFlix sur fond sombre">
+
+  <link rel="icon" href="assets/images/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/responsive.css">
+  <script type="module" src="js/main.js"></script>
+</head>
+<body data-page="catalog">
+  <a class="skip-link" href="#main">Aller au contenu principal</a>
+
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="logo" href="index.html">Stream<span class="logo-accent">Flix</span></a>
+
+      <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="main-nav">
+        <span class="visually-hidden">Menu</span>
+        <span class="menu-toggle-icon" aria-hidden="true"></span>
+      </button>
+
+      <nav id="main-nav" class="main-nav" aria-label="Navigation principale">
+        <ul class="nav-list">
+          <li><a class="nav-link" href="index.html" aria-current="page">Catalogue</a></li>
+          <li>
+            <a class="nav-link" href="liste.html">
+              Ma liste
+              <span class="nav-count"><span class="visually-hidden">séries retenues :</span> <span data-watchlist-count>0</span></span>
+            </a>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main" class="container page">
+    <section class="catalog" aria-labelledby="catalog-title">
+      <h1 id="catalog-title" class="page-title">Catalogue</h1>
+
+      <form id="catalog-filters" class="filters" role="search">
+        <div class="field field-search">
+          <input
+            id="search-input"
+            class="input"
+            type="search"
+            name="query"
+            minlength="2"
+            placeholder="Rechercher une série…"
+            aria-label="Rechercher une série par titre"
+            autocomplete="off"
+          >
+        </div>
+
+        <div class="field">
+          <label class="label" for="genre-select">Genre</label>
+          <select id="genre-select" class="select" name="genre">
+            <option value="">Tous les genres</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label class="label" for="sort-select">Trier par</label>
+          <select id="sort-select" class="select" name="sort">
+            <option value="rating-desc">Meilleure note</option>
+            <option value="rating-asc">Moins bonne note</option>
+            <option value="year-desc">Plus récentes</option>
+            <option value="year-asc">Plus anciennes</option>
+          </select>
+        </div>
+      </form>
+
+      <p id="results-count" class="results-count" aria-live="polite"></p>
+
+      <div id="catalog-status" aria-live="polite"></div>
+      <div id="catalog-grid" class="catalog-grid"></div>
+    </section>
+
+    <noscript>
+      <p class="noscript">Activez JavaScript pour afficher le catalogue.</p>
+    </noscript>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <p>© 2026 StreamFlix · Données fournies par <a href="https://www.tvmaze.com">TVMaze</a></p>
+    </div>
+  </footer>
+
+  <!-- Gabarit d'une carte série, cloné par main.js pour chaque série reçue de l'API -->
+  <template id="show-card-template">
+    <article class="show-card">
+      <div class="show-card-media"></div>
+      <div class="show-card-body">
+        <h2 class="show-card-title"><a class="show-card-link"></a></h2>
+        <ul class="tag-list show-card-genres" aria-label="Genres"></ul>
+        <p class="show-card-meta">
+          <span class="show-card-year"></span>
+          <span class="rating show-card-rating"></span>
+        </p>
+      </div>
+    </article>
+  </template>
+</body>
+</html>
