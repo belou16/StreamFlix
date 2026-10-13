@@ -36,6 +36,7 @@ import {
 
 const SEARCH_DEBOUNCE_MS = 300;
 const EAGER_POSTER_COUNT = 6; // affiches visibles à l'ouverture : chargées tout de suite
+const CARDS_PER_BATCH = 24; // cartes ajoutées par tâche, pour ne pas bloquer la page
 const SHOW_ID_PATTERN = /^[1-9]\d*$/; // nombre entier positif
 const USER_ID = 1; // pas encore de comptes utilisateurs
 const PRIORITY_ERROR = `La priorité doit être un nombre entier entre ${MIN_PRIORITY} et ${MAX_PRIORITY}.`;
@@ -80,6 +81,7 @@ let catalogPage = null;
 function initCatalogPage() {
   catalogPage = {
     shows: [],
+    renderId: 0,
     form: document.querySelector('#catalog-filters'),
     count: document.querySelector('#results-count'),
     status: document.querySelector('#catalog-status'),
@@ -130,18 +132,32 @@ function fillGenreOptions() {
 
 function renderCatalog() {
   const shows = getVisibleShows();
+  const renderId = ++catalogPage.renderId; // un nouveau rendu annule les paquets encore en attente
+
   catalogPage.count.textContent = formatCount(shows.length, 'série affichée', 'séries affichées');
+  catalogPage.grid.replaceChildren();
 
   if (shows.length === 0) {
-    catalogPage.grid.replaceChildren();
     renderEmptyCatalog();
     return;
   }
 
   catalogPage.status.replaceChildren();
-  catalogPage.grid.replaceChildren(
-    ...shows.map((show, index) => createShowCard(show, index < EAGER_POSTER_COUNT ? 'eager' : 'lazy')),
+  appendCards(shows, 0, renderId);
+}
+
+// Ajoute les cartes par paquets, chacun dans sa propre tâche, pour garder la page réactive.
+function appendCards(shows, start, renderId) {
+  if (renderId !== catalogPage.renderId) return;
+
+  const batch = shows.slice(start, start + CARDS_PER_BATCH);
+  catalogPage.grid.append(
+    ...batch.map((show, index) => createShowCard(show, start + index < EAGER_POSTER_COUNT ? 'eager' : 'lazy')),
   );
+
+  if (start + CARDS_PER_BATCH < shows.length) {
+    setTimeout(() => appendCards(shows, start + CARDS_PER_BATCH, renderId));
+  }
 }
 
 function getVisibleShows() {

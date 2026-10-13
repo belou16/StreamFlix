@@ -72,6 +72,7 @@
   --poster-width-thumb: 3.5rem;
   --poster-width-detail: 18rem;
   --card-min-width: 13rem;
+  --card-height: 10.5rem;
   --priority-input-width: 5rem;
   --spinner-size: 2.5rem;
   --spinner-size-small: 1rem;
@@ -363,6 +364,12 @@ select {
   font-weight: var(--font-weight-black);
   line-height: var(--line-height-tight);
   letter-spacing: var(--letter-spacing-tight);
+}
+
+.page-intro {
+  max-width: var(--text-max-width);
+  margin-bottom: var(--space-lg);
+  color: var(--color-text-muted);
 }
 
 /* Titre qui reçoit le focus par script : pas de contour. */
@@ -661,6 +668,11 @@ select {
 
 /* Catalogue */
 
+/* Réserve la hauteur de l'écran pendant le chargement : le pied de page ne saute pas. */
+.catalog {
+  min-height: 100vh;
+}
+
 .catalog-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -680,6 +692,10 @@ select {
     transform var(--transition-base),
     border-color var(--transition-base),
     box-shadow var(--transition-base);
+
+  /* Les cartes hors écran ne sont mises en page que lorsqu'on s'en approche. */
+  content-visibility: auto;
+  contain-intrinsic-size: auto var(--card-height);
 }
 
 .show-card:hover {

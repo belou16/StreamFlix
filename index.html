@@ -21,6 +21,9 @@
     <meta property="og:image:alt" content="Logo StreamFlix sur fond sombre" />
 
     <link rel="icon" href="assets/images/favicon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://static.tvmaze.com" />
+    <link rel="modulepreload" href="js/api.js" />
+    <link rel="modulepreload" href="js/utils.js" />
     <link rel="stylesheet" href="css/style.css" />
     <link rel="stylesheet" href="css/responsive.css" />
     <script type="module" src="js/main.js"></script>
@@ -57,6 +60,10 @@
     <main id="main" class="container page">
       <section class="catalog" aria-labelledby="catalog-title">
         <h1 id="catalog-title" class="page-title">Catalogue</h1>
+        <p class="page-intro">
+          Trouvez quoi regarder : recherchez une série par son titre, filtrez par genre, triez par note ou par année,
+          puis ajoutez vos coups de cœur à votre liste.
+        </p>
 
         <form id="catalog-filters" class="filters" role="search">
           <div class="field field-search">

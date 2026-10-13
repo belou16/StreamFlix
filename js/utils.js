@@ -154,6 +154,9 @@ export function createPoster(name, imageUrl, loading = 'lazy') {
   const poster = createElement('img', 'poster');
   Object.assign(poster, { width: POSTER_WIDTH, height: POSTER_HEIGHT, loading, decoding: 'async' });
 
+  // Une affiche visible dès l'ouverture est téléchargée en priorité.
+  if (loading === 'eager') poster.fetchPriority = 'high';
+
   // Image cassée : affiche par défaut (une seule fois, pour éviter une boucle).
   poster.addEventListener('error', () => showPlaceholder(poster), { once: true });
 
