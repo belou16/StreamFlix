@@ -1,18 +1,12 @@
-/**
- * Couche d'accès aux données.
- * Tous les appels réseau du site passent par ce module.
- */
+// Tous les appels réseau du site.
 
-// Seul point de configuration : changer cette URL suffit pour basculer vers l'API de production.
+// URL de l'API : la seule ligne à changer pour passer en production.
 const API_BASE_URL = 'https://api.tvmaze.com';
 
-// Service de recette pour l'envoi de la sélection, en attendant la route de l'API de production.
+// Service de test pour l'envoi de la sélection.
 const SELECTION_URL = 'https://jsonplaceholder.typicode.com/posts';
 
-/**
- * Erreur levée par la couche réseau.
- * `status` vaut null pour une erreur réseau, sinon le code HTTP reçu.
- */
+// Erreur réseau : status vaut null. Erreur HTTP : status contient le code.
 export class ApiError extends Error {
   constructor(message, status = null) {
     super(message);
@@ -21,10 +15,7 @@ export class ApiError extends Error {
   }
 }
 
-/**
- * Exécute une requête en distinguant les trois issues possibles :
- * erreur réseau, réponse HTTP en erreur (4xx / 5xx) et succès.
- */
+// Lance une requête et gère les 3 cas : erreur réseau, erreur HTTP, succès.
 async function request(url, options = {}) {
   let response;
 
@@ -34,7 +25,7 @@ async function request(url, options = {}) {
     throw new ApiError('Le serveur est injoignable. Vérifiez votre connexion puis réessayez.');
   }
 
-  // fetch ne rejette pas sa promesse sur un code 4xx / 5xx : il faut tester response.ok.
+  // fetch ne lève pas d'erreur sur un 404 ou un 500 : on vérifie response.ok.
   if (!response.ok) {
     throw new ApiError(`Le serveur a répondu par une erreur (code ${response.status}).`, response.status);
   }
@@ -51,10 +42,9 @@ export async function getShowById(id) {
 }
 
 export async function searchShows(text) {
-  const query = encodeURIComponent(text);
-  const results = await request(`${API_BASE_URL}/search/shows?q=${query}`);
+  const results = await request(`${API_BASE_URL}/search/shows?q=${encodeURIComponent(text)}`);
 
-  // L'API renvoie des objets { score, show } : seule la série nous intéresse.
+  // L'API renvoie { score, show } : on garde seulement show.
   return results.map((result) => result.show);
 }
 

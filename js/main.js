@@ -1,7 +1,4 @@
-/**
- * Point d'entrée commun aux trois pages.
- * L'attribut data-page du <body> indique quelle page initialiser.
- */
+// Script commun aux 3 pages. L'attribut data-page du <body> indique la page à lancer.
 import { ApiError, getShowById, getShows, sendSelection } from './api.js';
 import {
   addToWatchlist,
@@ -33,22 +30,22 @@ import {
 const SEARCH_DEBOUNCE_MS = 300;
 const PLACEHOLDER_POSTER = 'assets/images/poster-placeholder.svg';
 
-// Dimensions des affiches « medium » de TVMaze : elles réservent la place de l'image avant son chargement.
+// Taille des affiches TVMaze : réserve la place avant le chargement.
 const POSTER_WIDTH = 210;
 const POSTER_HEIGHT = 295;
 
-// Les premières cartes sont visibles dès l'ouverture : leurs affiches ne doivent pas attendre le chargement différé.
+// Les premières affiches sont visibles à l'ouverture : on les charge tout de suite.
 const EAGER_POSTER_COUNT = 6;
 
-// Entier strictement positif, sans zéro initial.
+// Nombre entier positif.
 const SHOW_ID_PATTERN = /^[1-9]\d*$/;
 
-// En attendant les comptes utilisateurs de l'API de production.
+// Pas encore de comptes utilisateurs.
 const USER_ID = 1;
 
 const PRIORITY_ERROR = `La priorité doit être un nombre entier entre ${MIN_PRIORITY} et ${MAX_PRIORITY}.`;
 
-// Chaque option du tri associe une donnée à comparer et un sens (1 croissant, -1 décroissant).
+// Pour chaque tri : la valeur à comparer et le sens (1 croissant, -1 décroissant).
 const SORT_OPTIONS = {
   'rating-desc': { getValue: getRating, direction: -1 },
   'rating-asc': { getValue: getRating, direction: 1 },
@@ -56,19 +53,15 @@ const SORT_OPTIONS = {
   'year-asc': { getValue: getYear, direction: 1 },
 };
 
-// Composants partagés
+// Composants communs
 
-/**
- * Affiche un état de l'interface (loading, empty, error ou not-found)
- * à la place du contenu d'une zone alimentée par le réseau.
- */
+// Affiche un état dans une zone : loading, empty, error ou not-found.
 function renderState(container, { type, title, message = '', action = null, headingLevel = 2 }) {
   const state = createElement('div', `state state-${type}`);
   const icon = createElement('span', type === 'loading' ? 'spinner' : 'state-icon');
+
   icon.setAttribute('aria-hidden', 'true');
-
   state.append(icon, createElement(`h${headingLevel}`, 'state-title', title));
-
   if (message) state.append(createElement('p', 'state-message', message));
   if (action) state.append(action);
 
@@ -79,25 +72,20 @@ function createButton(label, onClick) {
   const button = createElement('button', 'button button-secondary', label);
   button.type = 'button';
   button.addEventListener('click', onClick);
-
   return button;
 }
 
 function createLinkButton(label, href) {
   const link = createElement('a', 'button button-secondary', label);
   link.href = href;
-
   return link;
 }
 
 function createPoster(name, imageUrl, loading = 'lazy') {
   const poster = createElement('img', 'poster');
-  poster.width = POSTER_WIDTH;
-  poster.height = POSTER_HEIGHT;
-  poster.loading = loading;
-  poster.decoding = 'async';
+  Object.assign(poster, { width: POSTER_WIDTH, height: POSTER_HEIGHT, loading, decoding: 'async' });
 
-  // Affiche introuvable : on passe à l'affiche par défaut. `once` évite une boucle si elle échouait aussi.
+  // Image cassée : affiche par défaut (une seule fois, pour éviter une boucle).
   poster.addEventListener('error', () => showPlaceholder(poster), { once: true });
 
   if (imageUrl) {
@@ -122,24 +110,21 @@ function fillRating(element, rating) {
     return;
   }
 
-  const formattedRating = formatRating(rating);
-
-  // Les étoiles sont visuelles : l'équivalent textuel est porté par aria-label.
+  // Les étoiles sont décoratives : aria-label donne la note en texte.
   element.setAttribute('role', 'img');
-  element.setAttribute('aria-label', `Note : ${formattedRating} sur 10`);
+  element.setAttribute('aria-label', `Note : ${formatRating(rating)} sur 10`);
   element.replaceChildren(
     createElement('span', 'rating-stars', formatStars(rating)),
-    createElement('span', 'rating-value', `${formattedRating} / 10`),
+    createElement('span', 'rating-value', `${formatRating(rating)} / 10`),
   );
 }
 
 function fillGenreList(list, genres) {
   if (genres.length === 0) {
     list.replaceWith(createElement('p', 'text-muted', 'Genre non renseigné'));
-    return;
+  } else {
+    list.replaceChildren(...genres.map((genre) => createElement('li', 'tag', genre)));
   }
-
-  list.replaceChildren(...genres.map((genre) => createElement('li', 'tag', genre)));
 }
 
 function showFeedback(element, type, message) {
@@ -158,36 +143,26 @@ function getErrorMessage(error) {
 // En-tête : menu mobile et compteur de Ma liste
 
 function initHeader() {
-  initMenuToggle();
-  updateWatchlistCount();
+  const toggle = document.querySelector('.menu-toggle');
+  const isMenuOpen = () => toggle.getAttribute('aria-expanded') === 'true';
 
-  // Le compteur reste juste si la liste change dans un autre onglet ou après un retour arrière.
+  toggle.addEventListener('click', () => toggle.setAttribute('aria-expanded', String(!isMenuOpen())));
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && isMenuOpen()) {
+      toggle.setAttribute('aria-expanded', 'false');
+      toggle.focus();
+    }
+  });
+
+  // Met à jour le compteur si la liste change ailleurs (autre onglet, retour arrière).
+  updateWatchlistCount();
   window.addEventListener('storage', updateWatchlistCount);
   window.addEventListener('pageshow', updateWatchlistCount);
 }
 
-function initMenuToggle() {
-  const toggle = document.querySelector('.menu-toggle');
-
-  toggle.addEventListener('click', () => {
-    const isOpen = toggle.getAttribute('aria-expanded') === 'true';
-    toggle.setAttribute('aria-expanded', String(!isOpen));
-  });
-
-  document.addEventListener('keydown', (event) => {
-    if (event.key !== 'Escape' || toggle.getAttribute('aria-expanded') !== 'true') return;
-
-    toggle.setAttribute('aria-expanded', 'false');
-    toggle.focus();
-  });
-}
-
 function updateWatchlistCount() {
   const count = getWatchlist().length;
-
-  document.querySelectorAll('[data-watchlist-count]').forEach((counter) => {
-    counter.textContent = count;
-  });
+  for (const counter of document.querySelectorAll('[data-watchlist-count]')) counter.textContent = count;
 }
 
 // Catalogue (index.html)
@@ -198,17 +173,15 @@ function initCatalogPage() {
   catalogPage = {
     shows: [],
     form: document.querySelector('#catalog-filters'),
-    searchInput: document.querySelector('#search-input'),
-    genreSelect: document.querySelector('#genre-select'),
-    sortSelect: document.querySelector('#sort-select'),
     count: document.querySelector('#results-count'),
     status: document.querySelector('#catalog-status'),
     grid: document.querySelector('#catalog-grid'),
   };
 
-  catalogPage.searchInput.addEventListener('input', debounce(renderCatalog, SEARCH_DEBOUNCE_MS));
-  catalogPage.genreSelect.addEventListener('change', renderCatalog);
-  catalogPage.sortSelect.addEventListener('change', renderCatalog);
+  const { query, genre, sort } = catalogPage.form.elements;
+  query.addEventListener('input', debounce(renderCatalog, SEARCH_DEBOUNCE_MS));
+  genre.addEventListener('change', renderCatalog);
+  sort.addEventListener('change', renderCatalog);
   catalogPage.form.addEventListener('submit', (event) => event.preventDefault());
 
   loadCatalog();
@@ -230,86 +203,68 @@ async function loadCatalog() {
     return;
   }
 
-  fillGenreOptions(catalogPage.shows);
+  fillGenreOptions();
   setFiltersDisabled(false);
   renderCatalog();
 }
 
 function setFiltersDisabled(isDisabled) {
-  for (const field of catalogPage.form.elements) {
-    field.disabled = isDisabled;
-  }
+  for (const field of catalogPage.form.elements) field.disabled = isDisabled;
 }
 
-// Les genres proposés sont déduits des séries reçues : aucun n'est écrit en dur dans le HTML.
-function fillGenreOptions(shows) {
-  const genres = [...new Set(shows.flatMap((show) => show.genres))];
+// Genres tirés des données reçues : rien en dur dans le HTML.
+function fillGenreOptions() {
+  const genres = new Set(catalogPage.shows.flatMap((show) => show.genres));
+  const sortedGenres = [...genres].sort((a, b) => a.localeCompare(b, 'fr'));
 
-  genres
-    .sort((a, b) => a.localeCompare(b, 'fr'))
-    .forEach((genre) => catalogPage.genreSelect.add(new Option(genre, genre)));
+  sortedGenres.forEach((genre) => catalogPage.form.elements.genre.add(new Option(genre, genre)));
 }
 
 function renderCatalog() {
-  const filters = readFilters();
-  const visibleShows = sortShows(filterShows(catalogPage.shows, filters), filters.sort);
+  const shows = getVisibleShows();
+  catalogPage.count.textContent = formatCount(shows.length, 'série affichée', 'séries affichées');
 
-  catalogPage.count.textContent = formatCount(visibleShows.length, 'série affichée', 'séries affichées');
-
-  if (visibleShows.length === 0) {
+  if (shows.length === 0) {
     catalogPage.grid.replaceChildren();
-    renderEmptyCatalog(filters.query);
+    renderEmptyCatalog();
     return;
   }
 
   catalogPage.status.replaceChildren();
-  const cards = visibleShows.map((show, index) => {
-    const posterLoading = index < EAGER_POSTER_COUNT ? 'eager' : 'lazy';
-    return createShowCard(show, posterLoading);
-  });
-
-  catalogPage.grid.replaceChildren(...cards);
+  catalogPage.grid.replaceChildren(
+    ...shows.map((show, index) => createShowCard(show, index < EAGER_POSTER_COUNT ? 'eager' : 'lazy')),
+  );
 }
 
-function readFilters() {
-  const query = catalogPage.searchInput.value.trim();
+function getVisibleShows() {
+  const { genre, sort } = catalogPage.form.elements;
+  const searchedText = normalizeText(getSearchQuery());
+  const { getValue, direction } = SORT_OPTIONS[sort.value];
 
-  return {
-    // En dessous de la longueur minimale du champ (attribut minlength), la recherche est ignorée.
-    query: query.length >= catalogPage.searchInput.minLength ? query : '',
-    genre: catalogPage.genreSelect.value,
-    sort: catalogPage.sortSelect.value,
-  };
+  return catalogPage.shows
+    .filter((show) => normalizeText(show.name).includes(searchedText))
+    .filter((show) => genre.value === '' || show.genres.includes(genre.value))
+    .sort((a, b) => compareNullable(getValue(a), getValue(b), direction));
 }
 
-function filterShows(shows, { query, genre }) {
-  const searchedText = normalizeText(query);
-
-  return shows.filter((show) => {
-    const matchesTitle = normalizeText(show.name).includes(searchedText);
-    const matchesGenre = genre === '' || show.genres.includes(genre);
-
-    return matchesTitle && matchesGenre;
-  });
+// Texte plus court que minlength : pas de recherche.
+function getSearchQuery() {
+  const input = catalogPage.form.elements.query;
+  const query = input.value.trim();
+  return query.length >= input.minLength ? query : '';
 }
 
-function sortShows(shows, sortKey) {
-  const { getValue, direction } = SORT_OPTIONS[sortKey];
-
-  return [...shows].sort((a, b) => compareNullable(getValue(a), getValue(b), direction));
-}
-
-function renderEmptyCatalog(query) {
+function renderEmptyCatalog() {
   if (catalogPage.shows.length === 0) {
     renderState(catalogPage.status, {
       type: 'empty',
       title: 'Le catalogue ne contient aucune série pour le moment.',
-      message: 'Revenez un peu plus tard.',
       action: createButton('Réessayer', loadCatalog),
     });
     return;
   }
 
+  const query = getSearchQuery();
   renderState(catalogPage.status, {
     type: 'empty',
     title: query ? `Aucune série ne correspond à « ${query} ».` : 'Aucune série ne correspond à ces filtres.',
@@ -321,7 +276,7 @@ function renderEmptyCatalog(query) {
 function resetFilters() {
   catalogPage.form.reset();
   renderCatalog();
-  catalogPage.searchInput.focus();
+  catalogPage.form.elements.query.focus();
 }
 
 function createShowCard(show, posterLoading) {
@@ -330,7 +285,6 @@ function createShowCard(show, posterLoading) {
 
   link.href = getShowUrl(show.id);
   link.textContent = show.name;
-
   card.querySelector('.show-card-media').append(createPoster(show.name, getPosterUrl(show), posterLoading));
   card.querySelector('.show-card-year').textContent = formatYear(getYear(show));
   fillRating(card.querySelector('.show-card-rating'), getRating(show));
@@ -341,24 +295,7 @@ function createShowCard(show, posterLoading) {
 
 // Fiche série (serie.html)
 
-let showPage = null;
-
 function initShowPage() {
-  showPage = {
-    status: document.querySelector('#show-status'),
-    detail: document.querySelector('#show-detail'),
-    poster: document.querySelector('#show-poster'),
-    title: document.querySelector('#show-title'),
-    rating: document.querySelector('#show-rating'),
-    year: document.querySelector('#show-year'),
-    network: document.querySelector('#show-network'),
-    airingStatus: document.querySelector('#show-airing-status'),
-    genres: document.querySelector('#show-genres'),
-    summary: document.querySelector('#show-summary'),
-    watchlistButton: document.querySelector('#watchlist-button'),
-    watchlistFeedback: document.querySelector('#watchlist-feedback'),
-  };
-
   const id = new URLSearchParams(window.location.search).get('id');
 
   if (!id) {
@@ -371,10 +308,9 @@ function initShowPage() {
 }
 
 async function loadShow(id) {
-  renderState(showPage.status, { type: 'loading', title: 'Chargement de la fiche…', headingLevel: 1 });
+  renderShowState({ type: 'loading', title: 'Chargement de la fiche…' });
 
   let show;
-
   try {
     show = await getShowById(id);
   } catch (error) {
@@ -382,54 +318,60 @@ async function loadShow(id) {
     return;
   }
 
-  showPage.status.replaceChildren();
+  document.querySelector('#show-status').replaceChildren();
   renderShow(show);
 }
 
 function renderShowError(error, id) {
-  // Un identifiant bien formé mais inconnu de l'API donne une réponse 404.
+  // Id valide mais inconnu : l'API répond 404.
   if (error instanceof ApiError && error.status === 404) {
     renderShowNotFound(`Aucune série ne correspond à l'identifiant ${id}.`);
     return;
   }
 
-  renderState(showPage.status, {
+  renderShowState({
     type: 'error',
     title: 'Impossible de charger cette fiche.',
     message: getErrorMessage(error),
     action: createButton('Réessayer', () => loadShow(id)),
-    headingLevel: 1,
   });
 }
 
 function renderShowNotFound(message) {
   document.title = 'Fiche introuvable · StreamFlix';
-
-  renderState(showPage.status, {
+  renderShowState({
     type: 'not-found',
     title: 'Fiche introuvable',
     message,
     action: createLinkButton('Retour au catalogue', 'index.html'),
-    headingLevel: 1,
   });
 }
 
+// Sur la fiche, le titre de l'état est le h1 de la page.
+function renderShowState(state) {
+  renderState(document.querySelector('#show-status'), { ...state, headingLevel: 1 });
+}
+
 function renderShow(show) {
+  const watchlistButton = document.querySelector('#watchlist-button');
+
   document.title = `${show.name} · StreamFlix`;
+  document.querySelector('#show-poster').append(createPoster(show.name, getPosterUrl(show, 'original'), 'eager'));
+  document.querySelector('#show-title').textContent = show.name;
+  document.querySelector('#show-year').textContent = formatYear(getYear(show));
+  document.querySelector('#show-network').textContent = formatNetwork(show);
+  document.querySelector('#show-airing-status').textContent = formatStatus(show.status);
+  document.querySelector('#show-summary').replaceChildren(...createSummary(show.summary));
+  fillRating(document.querySelector('#show-rating'), getRating(show));
+  fillGenreList(document.querySelector('#show-genres'), show.genres);
 
-  showPage.poster.append(createPoster(show.name, getPosterUrl(show, 'original'), 'eager'));
-  showPage.title.textContent = show.name;
-  showPage.year.textContent = formatYear(getYear(show));
-  showPage.network.textContent = formatNetwork(show);
-  showPage.airingStatus.textContent = formatStatus(show.status);
-  showPage.summary.replaceChildren(...createSummary(show.summary));
-  fillRating(showPage.rating, getRating(show));
-  fillGenreList(showPage.genres, show.genres);
+  updateWatchlistButton(watchlistButton, show.id);
+  watchlistButton.addEventListener('click', () => {
+    toggleWatchlist(show);
+    updateWatchlistButton(watchlistButton, show.id);
+  });
 
-  updateWatchlistButton(show.id);
-  showPage.watchlistButton.addEventListener('click', () => toggleWatchlist(show));
-
-  showPage.detail.hidden = false;
+  document.querySelector('#show-detail').hidden = false;
 }
 
 function createSummary(summaryHtml) {
@@ -438,25 +380,24 @@ function createSummary(summaryHtml) {
   if (paragraphs.length === 0) {
     return [createElement('p', 'text-muted', 'Aucun résumé disponible pour cette série.')];
   }
-
   return paragraphs.map((text) => createElement('p', '', text));
 }
 
 function toggleWatchlist(show) {
+  const feedback = document.querySelector('#watchlist-feedback');
+
   if (isInWatchlist(show.id)) {
     removeFromWatchlist(show.id);
-    showFeedback(showPage.watchlistFeedback, 'success', 'Série retirée de votre liste.');
+    showFeedback(feedback, 'success', 'Série retirée de votre liste.');
   } else {
     addToWatchlist(show);
-    showFeedback(showPage.watchlistFeedback, 'success', 'Série ajoutée à votre liste.');
+    showFeedback(feedback, 'success', 'Série ajoutée à votre liste.');
   }
 
-  updateWatchlistButton(show.id);
   updateWatchlistCount();
 }
 
-function updateWatchlistButton(showId) {
-  const button = showPage.watchlistButton;
+function updateWatchlistButton(button, showId) {
   const isSaved = isInWatchlist(showId);
 
   button.textContent = isSaved ? 'Retirer de ma liste' : 'Ajouter à ma liste';
@@ -466,34 +407,25 @@ function updateWatchlistButton(showId) {
 
 // Ma liste (liste.html)
 
-let watchlistPage = null;
-
 function initWatchlistPage() {
-  watchlistPage = {
-    title: document.querySelector('#watchlist-title'),
-    count: document.querySelector('#watchlist-count'),
-    status: document.querySelector('#watchlist-status'),
-    form: document.querySelector('#watchlist-form'),
-    items: document.querySelector('#watchlist-items'),
-    submitButton: document.querySelector('#submit-button'),
-    feedback: document.querySelector('#submit-feedback'),
-  };
+  const items = document.querySelector('#watchlist-items');
 
-  watchlistPage.items.addEventListener('input', handlePriorityInput);
-  watchlistPage.items.addEventListener('click', handleRemoveClick);
-  watchlistPage.form.addEventListener('submit', handleSelectionSubmit);
+  items.addEventListener('input', handlePriorityInput);
+  items.addEventListener('click', handleRemoveClick);
+  document.querySelector('#watchlist-form').addEventListener('submit', handleSelectionSubmit);
 
   renderWatchlist();
 }
 
 function renderWatchlist() {
   const list = getWatchlist();
+  const status = document.querySelector('#watchlist-status');
 
-  watchlistPage.count.textContent = formatCount(list.length, 'série retenue', 'séries retenues');
+  document.querySelector('#watchlist-count').textContent = formatCount(list.length, 'série retenue', 'séries retenues');
+  document.querySelector('#watchlist-form').hidden = list.length === 0;
 
   if (list.length === 0) {
-    watchlistPage.form.hidden = true;
-    renderState(watchlistPage.status, {
+    renderState(status, {
       type: 'empty',
       title: 'Votre liste est vide.',
       message: "Ouvrez la fiche d'une série depuis le catalogue pour l'ajouter à votre liste.",
@@ -502,59 +434,48 @@ function renderWatchlist() {
     return;
   }
 
-  watchlistPage.status.replaceChildren();
-  watchlistPage.items.replaceChildren(...list.map(createWatchlistItem));
-  watchlistPage.form.hidden = false;
+  status.replaceChildren();
+  document.querySelector('#watchlist-items').replaceChildren(...list.map(createWatchlistItem));
 }
 
 function createWatchlistItem(item) {
   const row = cloneTemplate('#watchlist-item-template');
   const link = row.querySelector('.watchlist-link');
+  const input = row.querySelector('.priority-input');
+  const inputId = `priority-${item.id}`;
 
   link.href = getShowUrl(item.id);
   link.textContent = item.name;
-
   row.querySelector('.watchlist-media').append(createPoster(item.name, item.image));
   row.querySelector('.watchlist-year').textContent = formatYear(item.year);
   row.querySelector('.remove-button').dataset.id = item.id;
   row.querySelector('.remove-button-context').textContent = ` ${item.name}`;
-  fillPriorityField(row, item);
+
+  // Ids uniques pour relier le libellé, le champ et son message d'erreur.
+  input.id = inputId;
+  input.value = item.priority;
+  input.dataset.id = item.id;
+  input.setAttribute('aria-describedby', `${inputId}-error`);
+  row.querySelector('.priority-label').htmlFor = inputId;
+  row.querySelector('.field-error').id = `${inputId}-error`;
 
   return row;
 }
 
-// Relie le libellé, le champ et son message d'erreur grâce à des identifiants propres à la série.
-function fillPriorityField(row, item) {
-  const fieldId = `priority-${item.id}`;
-  const errorId = `${fieldId}-error`;
-  const input = row.querySelector('.priority-input');
-
-  input.id = fieldId;
-  input.value = item.priority;
-  input.dataset.id = item.id;
-  input.setAttribute('aria-describedby', errorId);
-
-  row.querySelector('.priority-label').htmlFor = fieldId;
-  row.querySelector('.field-error').id = errorId;
-}
-
 function handlePriorityInput(event) {
   const input = event.target;
-  if (!input.matches('.priority-input')) return;
 
-  if (validatePriorityField(input)) {
+  if (input.matches('.priority-input') && validatePriorityField(input)) {
     updatePriority(Number(input.dataset.id), Number(input.value));
   }
 }
 
-// Affiche ou efface le message d'erreur du champ, puis indique s'il est valide.
+// Affiche ou efface l'erreur du champ, et renvoie s'il est valide.
 function validatePriorityField(input) {
   const isValid = isValidPriority(input.value);
-  const error = input.closest('.watchlist-item').querySelector('.field-error');
 
   input.setAttribute('aria-invalid', String(!isValid));
-  error.textContent = isValid ? '' : PRIORITY_ERROR;
-
+  input.closest('.watchlist-item').querySelector('.field-error').textContent = isValid ? '' : PRIORITY_ERROR;
   return isValid;
 }
 
@@ -566,31 +487,32 @@ function handleRemoveClick(event) {
   updateWatchlistCount();
   renderWatchlist();
 
-  // La ligne supprimée avait le focus : on le replace sur le titre de la page.
-  watchlistPage.title.focus();
+  // La ligne supprimée avait le focus : on le remet sur le titre.
+  document.querySelector('#watchlist-title').focus();
 }
 
 async function handleSelectionSubmit(event) {
   event.preventDefault();
+  const feedback = document.querySelector('#submit-feedback');
 
-  // Tous les champs sont vérifiés, pour signaler chaque priorité fautive et pas seulement la première.
-  const inputs = [...watchlistPage.items.querySelectorAll('.priority-input')];
+  // On vérifie tous les champs pour afficher toutes les erreurs.
+  const inputs = [...document.querySelectorAll('.priority-input')];
   const invalidInputs = inputs.filter((input) => !validatePriorityField(input));
 
   if (invalidInputs.length > 0) {
-    showFeedback(watchlistPage.feedback, 'error', "Corrigez les priorités signalées avant d'envoyer votre sélection.");
+    showFeedback(feedback, 'error', "Corrigez les priorités signalées avant d'envoyer votre sélection.");
     invalidInputs[0].focus();
     return;
   }
 
   setSubmitting(true);
-  showFeedback(watchlistPage.feedback, 'pending', 'Envoi de votre sélection…');
+  showFeedback(feedback, 'pending', 'Envoi de votre sélection…');
 
   try {
     const response = await sendSelection(buildSelectionPayload());
-    showFeedback(watchlistPage.feedback, 'success', `Sélection envoyée (n° ${response.id}).`);
+    showFeedback(feedback, 'success', `Sélection envoyée (n° ${response.id}).`);
   } catch (error) {
-    showFeedback(watchlistPage.feedback, 'error', `L'envoi a échoué. ${getErrorMessage(error)}`);
+    showFeedback(feedback, 'error', `L'envoi a échoué. ${getErrorMessage(error)}`);
   } finally {
     setSubmitting(false);
   }
@@ -605,7 +527,7 @@ function buildSelectionPayload() {
 }
 
 function setSubmitting(isSubmitting) {
-  const button = watchlistPage.submitButton;
+  const button = document.querySelector('#submit-button');
 
   button.disabled = isSubmitting;
   button.classList.toggle('is-loading', isSubmitting);

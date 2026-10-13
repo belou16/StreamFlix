@@ -1,9 +1,6 @@
-/**
- * Fonctions partagées par les trois pages : création d'éléments, mise en forme
- * des données de l'API et stockage de « Ma liste » dans le navigateur.
- */
+// Fonctions utilisées par les 3 pages.
 
-// DOM
+// Outils
 
 export function createElement(tagName, className = '', text = '') {
   const element = document.createElement(tagName);
@@ -15,8 +12,7 @@ export function createElement(tagName, className = '', text = '') {
 }
 
 export function cloneTemplate(selector) {
-  const template = document.querySelector(selector);
-  return template.content.firstElementChild.cloneNode(true);
+  return document.querySelector(selector).content.firstElementChild.cloneNode(true);
 }
 
 export function debounce(callback, delay) {
@@ -30,17 +26,17 @@ export function debounce(callback, delay) {
 
 // Texte et dates
 
-// Minuscules et sans accents, pour que « pokemon » trouve « Pokémon ».
+// Minuscules et sans accents : « pokemon » trouve « Pokémon ».
 export function normalizeText(text) {
   return text.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
 }
 
-// formatCount(2, 'série retenue', 'séries retenues') → « 2 séries retenues »
+// formatCount(2, 'série', 'séries') → « 2 séries »
 export function formatCount(count, singular, plural) {
   return `${count} ${count > 1 ? plural : singular}`;
 }
 
-// Date locale au format AAAA-MM-JJ (toISOString donnerait la date UTC, décalée la nuit).
+// Date du jour AAAA-MM-JJ en heure locale (toISOString donne l'heure UTC).
 export function getTodayDate() {
   const today = new Date();
   const month = String(today.getMonth() + 1).padStart(2, '0');
@@ -49,10 +45,7 @@ export function getTodayDate() {
   return `${today.getFullYear()}-${month}-${day}`;
 }
 
-/**
- * Le résumé fourni par l'API contient du HTML. Plutôt que de l'injecter tel quel (risque XSS),
- * on l'analyse avec DOMParser, qui n'exécute aucun script, et on n'en garde que le texte.
- */
+// Le résumé de l'API contient du HTML : on garde seulement le texte (pas d'innerHTML, pas de XSS).
 export function htmlToParagraphs(html) {
   const parsed = new DOMParser().parseFromString(html, 'text/html');
   const paragraphs = [...parsed.querySelectorAll('p')].map((paragraph) => paragraph.textContent.trim());
@@ -72,11 +65,6 @@ const STATUS_LABELS = {
 
 const STAR_COUNT = 5;
 
-const ratingFormatter = new Intl.NumberFormat('fr-FR', {
-  minimumFractionDigits: 1,
-  maximumFractionDigits: 1,
-});
-
 export function getRating(show) {
   return show.rating?.average ?? null;
 }
@@ -94,17 +82,17 @@ export function formatYear(year) {
 }
 
 export function formatRating(rating) {
-  return ratingFormatter.format(rating);
+  return rating.toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 }
 
-// La note de l'API est sur 10, l'affichage se fait sur 5 étoiles.
+// Note sur 10 → 5 étoiles.
 export function formatStars(rating) {
   const filledStars = Math.round(rating / 2);
   return '★'.repeat(filledStars) + '☆'.repeat(STAR_COUNT - filledStars);
 }
 
 export function formatNetwork(show) {
-  // Les séries diffusées en ligne n'ont pas de chaîne mais une plateforme (webChannel).
+  // Séries en streaming : pas de chaîne, mais une plateforme (webChannel).
   return show.network?.name ?? show.webChannel?.name ?? 'Chaîne inconnue';
 }
 
@@ -112,7 +100,7 @@ export function formatStatus(status) {
   return STATUS_LABELS[status] ?? status ?? 'Statut inconnu';
 }
 
-// Une valeur absente (null) est toujours placée en fin de liste, quel que soit le sens du tri.
+// Les valeurs manquantes (null) vont toujours à la fin.
 export function compareNullable(a, b, direction) {
   if (a === null && b === null) return 0;
   if (a === null) return 1;
@@ -125,13 +113,12 @@ export function compareNullable(a, b, direction) {
 
 const WATCHLIST_KEY = 'streamflix-watchlist';
 
-// Mêmes bornes que les attributs min et max du champ de priorité (liste.html).
+// Mêmes bornes que min et max dans liste.html.
 export const MIN_PRIORITY = 1;
 export const MAX_PRIORITY = 10;
 
 export function getWatchlist() {
-  // Une valeur illisible (modifiée à la main, ancien format) ne doit pas empêcher le site de fonctionner :
-  // la liste repart alors de zéro.
+  // Données illisibles dans le stockage : on repart d'une liste vide.
   try {
     const savedList = JSON.parse(localStorage.getItem(WATCHLIST_KEY));
     return Array.isArray(savedList) ? savedList : [];
@@ -172,7 +159,7 @@ export function updatePriority(showId, priority) {
   saveWatchlist(list);
 }
 
-// `value` est la valeur brute du champ : une chaîne, vide si la saisie n'est pas un nombre.
+// value est le texte du champ (vide si ce n'est pas un nombre).
 export function isValidPriority(value) {
   if (value.trim() === '') return false;
 
