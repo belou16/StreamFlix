@@ -259,7 +259,9 @@ select {
   height: var(--border-width-strong);
   background-color: var(--color-text);
   border-radius: var(--radius-pill);
-  transition: transform var(--transition-base), background-color var(--transition-base);
+  transition:
+    transform var(--transition-base),
+    background-color var(--transition-base);
 }
 
 .menu-toggle-icon {
@@ -324,7 +326,9 @@ select {
   text-decoration: none;
   border-left: var(--indicator-width) solid transparent;
   border-radius: var(--radius-sm);
-  transition: color var(--transition-fast), background-color var(--transition-fast);
+  transition:
+    color var(--transition-fast),
+    background-color var(--transition-fast);
 }
 
 .nav-link:hover {
@@ -472,7 +476,9 @@ select {
   border: var(--border-width) solid transparent;
   border-radius: var(--radius-md);
   cursor: pointer;
-  transition: background-color var(--transition-fast), border-color var(--transition-fast);
+  transition:
+    background-color var(--transition-fast),
+    border-color var(--transition-fast);
 }
 
 .button-primary {
@@ -673,7 +679,10 @@ select {
   background-color: var(--color-surface);
   border: var(--border-width) solid var(--color-border);
   border-radius: var(--radius-lg);
-  transition: transform var(--transition-base), border-color var(--transition-base), box-shadow var(--transition-base);
+  transition:
+    transform var(--transition-base),
+    border-color var(--transition-base),
+    box-shadow var(--transition-base);
 }
 
 .show-card:hover {
