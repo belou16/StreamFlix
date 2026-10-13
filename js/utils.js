@@ -1,4 +1,22 @@
 // Fonctions utilisées par les 3 pages.
+import { ApiError } from './api.js';
+
+const PLACEHOLDER_POSTER = 'assets/images/poster-placeholder.svg';
+const POSTER_WIDTH = 210; // taille des affiches TVMaze : réserve la place avant le chargement
+const POSTER_HEIGHT = 295;
+const STAR_COUNT = 5;
+const WATCHLIST_KEY = 'streamflix-watchlist';
+
+// Mêmes bornes que min et max dans liste.html.
+export const MIN_PRIORITY = 1;
+export const MAX_PRIORITY = 10;
+
+const STATUS_LABELS = {
+  Running: 'En cours',
+  Ended: 'Terminée',
+  'To Be Determined': 'À déterminer',
+  'In Development': 'En développement',
+};
 
 // Outils
 
@@ -56,15 +74,6 @@ export function htmlToParagraphs(html) {
 
 // Données des séries
 
-const STATUS_LABELS = {
-  Running: 'En cours',
-  Ended: 'Terminée',
-  'To Be Determined': 'À déterminer',
-  'In Development': 'En développement',
-};
-
-const STAR_COUNT = 5;
-
 export function getRating(show) {
   return show.rating?.average ?? null;
 }
@@ -77,16 +86,20 @@ export function getPosterUrl(show, size = 'medium') {
   return show.image?.[size] ?? null;
 }
 
+export function getShowUrl(showId) {
+  return `serie.html?id=${showId}`;
+}
+
 export function formatYear(year) {
   return year === null ? 'Année inconnue' : String(year);
 }
 
-export function formatRating(rating) {
+function formatRating(rating) {
   return rating.toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 }
 
 // Note sur 10 → 5 étoiles.
-export function formatStars(rating) {
+function formatStars(rating) {
   const filledStars = Math.round(rating / 2);
   return '★'.repeat(filledStars) + '☆'.repeat(STAR_COUNT - filledStars);
 }
@@ -109,13 +122,90 @@ export function compareNullable(a, b, direction) {
   return (a - b) * direction;
 }
 
-// Ma liste
+// Composants communs
 
-const WATCHLIST_KEY = 'streamflix-watchlist';
+// Affiche un état dans une zone : loading, empty, error ou not-found.
+export function renderState(container, { type, title, message = '', action = null, headingLevel = 2 }) {
+  const state = createElement('div', `state state-${type}`);
+  const icon = createElement('span', type === 'loading' ? 'spinner' : 'state-icon');
 
-// Mêmes bornes que min et max dans liste.html.
-export const MIN_PRIORITY = 1;
-export const MAX_PRIORITY = 10;
+  icon.setAttribute('aria-hidden', 'true');
+  state.append(icon, createElement(`h${headingLevel}`, 'state-title', title));
+  if (message) state.append(createElement('p', 'state-message', message));
+  if (action) state.append(action);
+
+  container.replaceChildren(state);
+}
+
+export function createButton(label, onClick) {
+  const button = createElement('button', 'button button-secondary', label);
+  button.type = 'button';
+  button.addEventListener('click', onClick);
+  return button;
+}
+
+export function createLinkButton(label, href) {
+  const link = createElement('a', 'button button-secondary', label);
+  link.href = href;
+  return link;
+}
+
+export function createPoster(name, imageUrl, loading = 'lazy') {
+  const poster = createElement('img', 'poster');
+  Object.assign(poster, { width: POSTER_WIDTH, height: POSTER_HEIGHT, loading, decoding: 'async' });
+
+  // Image cassée : affiche par défaut (une seule fois, pour éviter une boucle).
+  poster.addEventListener('error', () => showPlaceholder(poster), { once: true });
+
+  if (imageUrl) {
+    poster.src = imageUrl;
+    poster.alt = `Affiche de ${name}`;
+  } else {
+    showPlaceholder(poster);
+  }
+
+  return poster;
+}
+
+function showPlaceholder(poster) {
+  poster.src = PLACEHOLDER_POSTER;
+  poster.alt = 'Affiche indisponible';
+}
+
+export function fillRating(element, rating) {
+  if (rating === null) {
+    element.textContent = 'Non notée';
+    element.classList.add('rating-missing');
+    return;
+  }
+
+  // Les étoiles sont décoratives : aria-label donne la note en texte.
+  element.setAttribute('role', 'img');
+  element.setAttribute('aria-label', `Note : ${formatRating(rating)} sur 10`);
+  element.replaceChildren(
+    createElement('span', 'rating-stars', formatStars(rating)),
+    createElement('span', 'rating-value', `${formatRating(rating)} / 10`),
+  );
+}
+
+export function fillGenreList(list, genres) {
+  if (genres.length === 0) {
+    list.replaceWith(createElement('p', 'text-muted', 'Genre non renseigné'));
+  } else {
+    list.replaceChildren(...genres.map((genre) => createElement('li', 'tag', genre)));
+  }
+}
+
+export function showFeedback(element, type, message) {
+  element.dataset.type = type;
+  element.textContent = message;
+}
+
+export function getErrorMessage(error) {
+  return error instanceof ApiError ? error.message : 'Une erreur inattendue est survenue.';
+}
+
+// Ma liste (stockée dans le navigateur)
 
 export function getWatchlist() {
   // Données illisibles dans le stockage : on repart d'une liste vide.

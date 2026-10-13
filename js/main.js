@@ -4,16 +4,21 @@ import {
   addToWatchlist,
   cloneTemplate,
   compareNullable,
+  createButton,
   createElement,
+  createLinkButton,
+  createPoster,
   debounce,
+  fillGenreList,
+  fillRating,
   formatCount,
   formatNetwork,
-  formatRating,
-  formatStars,
   formatStatus,
   formatYear,
+  getErrorMessage,
   getPosterUrl,
   getRating,
+  getShowUrl,
   getTodayDate,
   getWatchlist,
   getYear,
@@ -24,25 +29,15 @@ import {
   MIN_PRIORITY,
   normalizeText,
   removeFromWatchlist,
+  renderState,
+  showFeedback,
   updatePriority,
 } from './utils.js';
 
 const SEARCH_DEBOUNCE_MS = 300;
-const PLACEHOLDER_POSTER = 'assets/images/poster-placeholder.svg';
-
-// Taille des affiches TVMaze : réserve la place avant le chargement.
-const POSTER_WIDTH = 210;
-const POSTER_HEIGHT = 295;
-
-// Les premières affiches sont visibles à l'ouverture : on les charge tout de suite.
-const EAGER_POSTER_COUNT = 6;
-
-// Nombre entier positif.
-const SHOW_ID_PATTERN = /^[1-9]\d*$/;
-
-// Pas encore de comptes utilisateurs.
-const USER_ID = 1;
-
+const EAGER_POSTER_COUNT = 6; // affiches visibles à l'ouverture : chargées tout de suite
+const SHOW_ID_PATTERN = /^[1-9]\d*$/; // nombre entier positif
+const USER_ID = 1; // pas encore de comptes utilisateurs
 const PRIORITY_ERROR = `La priorité doit être un nombre entier entre ${MIN_PRIORITY} et ${MAX_PRIORITY}.`;
 
 // Pour chaque tri : la valeur à comparer et le sens (1 croissant, -1 décroissant).
@@ -52,93 +47,6 @@ const SORT_OPTIONS = {
   'year-desc': { getValue: getYear, direction: -1 },
   'year-asc': { getValue: getYear, direction: 1 },
 };
-
-// Composants communs
-
-// Affiche un état dans une zone : loading, empty, error ou not-found.
-function renderState(container, { type, title, message = '', action = null, headingLevel = 2 }) {
-  const state = createElement('div', `state state-${type}`);
-  const icon = createElement('span', type === 'loading' ? 'spinner' : 'state-icon');
-
-  icon.setAttribute('aria-hidden', 'true');
-  state.append(icon, createElement(`h${headingLevel}`, 'state-title', title));
-  if (message) state.append(createElement('p', 'state-message', message));
-  if (action) state.append(action);
-
-  container.replaceChildren(state);
-}
-
-function createButton(label, onClick) {
-  const button = createElement('button', 'button button-secondary', label);
-  button.type = 'button';
-  button.addEventListener('click', onClick);
-  return button;
-}
-
-function createLinkButton(label, href) {
-  const link = createElement('a', 'button button-secondary', label);
-  link.href = href;
-  return link;
-}
-
-function createPoster(name, imageUrl, loading = 'lazy') {
-  const poster = createElement('img', 'poster');
-  Object.assign(poster, { width: POSTER_WIDTH, height: POSTER_HEIGHT, loading, decoding: 'async' });
-
-  // Image cassée : affiche par défaut (une seule fois, pour éviter une boucle).
-  poster.addEventListener('error', () => showPlaceholder(poster), { once: true });
-
-  if (imageUrl) {
-    poster.src = imageUrl;
-    poster.alt = `Affiche de ${name}`;
-  } else {
-    showPlaceholder(poster);
-  }
-
-  return poster;
-}
-
-function showPlaceholder(poster) {
-  poster.src = PLACEHOLDER_POSTER;
-  poster.alt = 'Affiche indisponible';
-}
-
-function fillRating(element, rating) {
-  if (rating === null) {
-    element.textContent = 'Non notée';
-    element.classList.add('rating-missing');
-    return;
-  }
-
-  // Les étoiles sont décoratives : aria-label donne la note en texte.
-  element.setAttribute('role', 'img');
-  element.setAttribute('aria-label', `Note : ${formatRating(rating)} sur 10`);
-  element.replaceChildren(
-    createElement('span', 'rating-stars', formatStars(rating)),
-    createElement('span', 'rating-value', `${formatRating(rating)} / 10`),
-  );
-}
-
-function fillGenreList(list, genres) {
-  if (genres.length === 0) {
-    list.replaceWith(createElement('p', 'text-muted', 'Genre non renseigné'));
-  } else {
-    list.replaceChildren(...genres.map((genre) => createElement('li', 'tag', genre)));
-  }
-}
-
-function showFeedback(element, type, message) {
-  element.dataset.type = type;
-  element.textContent = message;
-}
-
-function getShowUrl(showId) {
-  return `serie.html?id=${showId}`;
-}
-
-function getErrorMessage(error) {
-  return error instanceof ApiError ? error.message : 'Une erreur inattendue est survenue.';
-}
 
 // En-tête : menu mobile et compteur de Ma liste
 
